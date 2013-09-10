@@ -22,6 +22,7 @@ Time related utilities and helper functions.
 import calendar
 import datetime
 import time
+import decimal
 
 import iso8601
 import six
@@ -112,6 +113,32 @@ def utcnow():
 def iso8601_from_timestamp(timestamp):
     """Returns a iso8601 formated date from timestamp."""
     return isotime(datetime.datetime.utcfromtimestamp(timestamp))
+
+
+def epochtime(at=None, subsecond=False):
+    """Stringify time in epoch format."""
+    if not at:
+        at = utcnow()
+    decimal.getcontext().prec = 30
+    dec = decimal.Decimal(str(calendar.timegm(at.utctimetuple())))
+    if subsecond:
+        dec += (decimal.Decimal(str(at.microsecond)) /
+            decimal.Decimal("1000000.0"))
+    return str(dec)
+
+
+def parse_epochtime(timestr):
+    """Parse time from epoch format."""
+    dec = decimal.Decimal(timestr)
+    integer = int(dec)
+    micro = (dec - decimal.Decimal(integer)) * decimal.Decimal(1000000)
+    dt = datetime.datetime.utcfromtimestamp(integer)
+    return dt.replace(microsecond=micro)
+
+
+def epoch_from_timestamp(timestamp):
+    """Returns an epoch formated date from timestamp."""
+    return epochtime(datetime.datetime.utcfromtimestamp(timestamp))
 
 
 utcnow.override_time = None
